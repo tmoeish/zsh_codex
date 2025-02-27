@@ -236,6 +236,40 @@ class AmazonBedrock(BaseClient):
         response_body = json.loads(response["body"].read())
         return response_body["content"][0]["text"]
 
+class ClaudeClient(BaseClient):
+    """
+    config keys:
+        - api_type="claude"
+        - api_key (required)
+        - model (optional): defaults to "claude-3-7-sonnet-latest" or environment variable CLAUDE_DEFAULT_MODEL
+        - temperature (optional): defaults to 1.0
+    """
+
+    api_type = "claude"
+    default_model = os.getenv("CLAUDE_DEFAULT_MODEL", "claude-3-sonnet-20240229")
+
+    def __init__(self, config: dict):
+        try:
+            from anthropic import Anthropic
+        except ImportError:
+            print(
+                "Anthropic library is not installed. Please install it using 'pip install anthropic'"
+            )
+            sys.exit(1)
+
+        self.config = config
+        self.config["model"] = self.config.get("model", self.default_model)
+        self.client = Anthropic(api_key=self.config["api_key"])
+
+    def get_completion(self, full_command: str) -> str:
+        response = self.client.messages.create(
+            model=self.config["model"],
+            system=self.system_prompt,
+            messages=[{"role": "user", "content": full_command}],
+            temperature=float(self.config.get("temperature", 0.7)),
+            max_tokens=1000,
+        )
+        return response.content[0].text
 
 class ClientFactory:
     api_types = [
@@ -244,6 +278,7 @@ class ClientFactory:
         GroqClient.api_type,
         MistralClient.api_type,
         AmazonBedrock.api_type,
+        ClaudeClient.api_type,
     ]
 
     @classmethod
@@ -268,6 +303,8 @@ class ClientFactory:
                 return MistralClient(config)
             case AmazonBedrock.api_type:
                 return AmazonBedrock(config)
+            case ClaudeClient.api_type:
+                return ClaudeClient(config)
             case _:
                 raise KeyError(
                     f"Specified API type {api_type} is not one of the supported services {cls.api_types}"
