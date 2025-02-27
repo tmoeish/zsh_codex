@@ -50,19 +50,25 @@ This is a ZSH plugin that enables you to use AI powered code completion in the c
 1. Install the OpenAI package, the Google package, or boto3.
 
 ```bash
-pip3 install openai
+pipx install anthropic
 ```
 
 or
 
 ```bash
-pip3 install google-generativeai
+pipx install openai
 ```
 
 or
 
 ```bash
-pip3 install boto3
+pipx install google-generativeai
+```
+
+or
+
+```bash
+pipx install boto3
 ```
 
 2. Download the ZSH plugin.
