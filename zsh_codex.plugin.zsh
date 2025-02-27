@@ -24,4 +24,4 @@ create_completion() {
 # Bind the create_completion function to a key.
 zle -N create_completion
 # You may want to add a key binding here, e.g.:
-# bindkey '^X^E' create_completion
+bindkey '^X^E' create_completion
