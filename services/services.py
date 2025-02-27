@@ -101,10 +101,10 @@ class GroqClient(BaseClient):
         - model (optional): defaults to "llama-3.2-11b-text-preview"
         - temperature (optional): defaults to 1.0.
     """
-    
+
     api_type = "groq"
     default_model = os.getenv("GROQ_DEFAULT_MODEL", "llama-3.2-11b-text-preview")
-    
+
     def __init__(self, config: dict):
         try:
             from groq import Groq
@@ -119,7 +119,7 @@ class GroqClient(BaseClient):
         self.client = Groq(
             api_key=self.config["api_key"],
         )
-    
+
     def get_completion(self, full_command: str) -> str:
         response = self.client.chat.completions.create(
             model=self.config["model"],
@@ -140,10 +140,10 @@ class MistralClient(BaseClient):
         - model (optional): defaults to "codestral-latest"
         - temperature (optional): defaults to 1.0.
     """
-    
+
     api_type = "mistral"
     default_model = os.getenv("MISTRAL_DEFAULT_MODEL", "codestral-latest")
-    
+
     def __init__(self, config: dict):
         try:
             from mistralai import Mistral
@@ -152,13 +152,13 @@ class MistralClient(BaseClient):
                 "Mistral library is not installed. Please install it using 'pip install mistralai'"
             )
             sys.exit(1)
-        
+
         self.config = config
         self.config["model"] = self.config.get("model", self.default_model)
         self.client = Mistral(
             api_key=self.config["api_key"],
         )
-        
+
     def get_completion(self, full_command: str) -> str:
         response = self.client.chat.complete(
             model=self.config["model"],
@@ -169,6 +169,7 @@ class MistralClient(BaseClient):
             temperature=float(self.config.get("temperature", 1.0)),
         )
         return response.choices[0].message.content
+
 
 class AmazonBedrock(BaseClient):
     """
@@ -183,7 +184,9 @@ class AmazonBedrock(BaseClient):
     """
 
     api_type = "bedrock"
-    default_model = os.getenv("BEDROCK_DEFAULT_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0")
+    default_model = os.getenv(
+        "BEDROCK_DEFAULT_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    )
 
     def __init__(self, config: dict):
         try:
@@ -212,9 +215,7 @@ class AmazonBedrock(BaseClient):
     def get_completion(self, full_command: str) -> str:
         import json
 
-        messages = [
-            {"role": "user", "content": full_command}
-        ]
+        messages = [{"role": "user", "content": full_command}]
 
         # Format request body based on model type
         if "claude" in self.config["model"].lower():
@@ -223,23 +224,27 @@ class AmazonBedrock(BaseClient):
                 "max_tokens": 1000,
                 "system": self.system_prompt,
                 "messages": messages,
-                "temperature": float(self.config.get("temperature", 1.0))
+                "temperature": float(self.config.get("temperature", 1.0)),
             }
         else:
             raise ValueError(f"Unsupported model: {self.config['model']}")
 
         response = self.client.invoke_model(
-            modelId=self.config["model"],
-            body=json.dumps(body)
+            modelId=self.config["model"], body=json.dumps(body)
         )
 
-        response_body = json.loads(response['body'].read())
+        response_body = json.loads(response["body"].read())
         return response_body["content"][0]["text"]
 
 
-
 class ClientFactory:
-    api_types = [OpenAIClient.api_type, GoogleGenAIClient.api_type, GroqClient.api_type, MistralClient.api_type, AmazonBedrock.api_type]
+    api_types = [
+        OpenAIClient.api_type,
+        GoogleGenAIClient.api_type,
+        GroqClient.api_type,
+        MistralClient.api_type,
+        AmazonBedrock.api_type,
+    ]
 
     @classmethod
     def create(cls):
